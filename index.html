@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام مدرسة يزيد بن الحارث | المطور</title>
+    <title>نظام مدرسة يزيد بن الحارث | المطور الذكي</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     
@@ -54,10 +54,27 @@
         .class-card:hover { border-color: var(--primary); transform: translateY(-3px); }
         .class-card.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 10px 20px rgba(0,74,153,0.2); }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
-        .stat-card { background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #eee; text-align: center; }
-        .progress-bar { width: 100%; background: #eee; height: 8px; border-radius: 4px; margin-top: 5px; overflow: hidden; }
+        /* لوحة التحكم */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .stat-card { background: #f8f9fa; padding: 12px; border-radius: 12px; border: 1px solid #eee; text-align: center; }
+        .progress-bar { width: 100%; background: #eee; height: 6px; border-radius: 4px; margin-top: 5px; overflow: hidden; }
         .progress-fill { background: var(--secondary); height: 100%; border-radius: 4px; transition: width 0.5s; }
+
+        /* ميزة البحث الذكي */
+        .search-container { position: relative; flex-grow: 1; }
+        .suggestions-list {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: white; border: 1px solid #ddd; border-radius: 8px;
+            max-height: 200px; overflow-y: auto; z-index: 1000; display: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .suggestion-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: 0.2s; }
+        .suggestion-item:hover { background: #f0f7ff; color: var(--primary); }
+
+        .result-card {
+            background: #e7f3ff; border: 1px solid var(--primary);
+            padding: 15px; border-radius: 12px; margin-bottom: 20px; display: none;
+        }
 
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
         th { background: var(--primary); color: white; padding: 12px; font-size: 14px; }
@@ -96,7 +113,6 @@
     <form id="updateForm">
         <label>1. اختر الصف الدراسي:</label>
         <div class="class-grid" id="classPicker"></div>
-
         <input type="hidden" id="classInput" required>
         <input type="hidden" id="classNameInput">
 
@@ -119,7 +135,7 @@
         </div>
     </form>
 
-    <div class="school-footer" id="secretTrigger" onclick="handleSecretClick()">
+    <div class="school-footer" onclick="handleSecretClick()">
         <div style="color: #888; font-size: 13px;">تحت إشراف مدير المدرسة</div>
         <div class="manager-name">الأستاذ هشام الكحالي</div>
     </div>
@@ -127,16 +143,28 @@
 
 <div class="container hidden" id="adminView">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--primary); padding-bottom: 10px;">
-        <h2 style="color: var(--primary); margin:0;">لوحة التحكم المركزية</h2>
-        <button onclick="location.reload()" style="background:#eee; border:none; padding:5px 15px; border-radius:8px; cursor:pointer;">خروج</button>
+        <h3 style="color: var(--primary); margin:0;">لوحة المدير - البحث الذكي</h3>
+        <button onclick="location.reload()" style="background:#eee; border:none; padding:5px 12px; border-radius:8px; cursor:pointer;">خروج</button>
     </div>
+
+    <div id="resultCard" class="result-card">
+        <strong id="resName"></strong> | <span id="resClass"></span><br>
+        الهاتف المحدث: <strong id="resPhone" style="color: var(--secondary); font-size: 18px;"></strong><br>
+        الصلة: <span id="resRelation"></span> | التاريخ: <small id="resDate"></small>
+    </div>
+
     <div class="stats-grid" id="statsArea"></div>
+
     <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-        <input type="text" id="adminSearch" placeholder="ابحث عن اسم طالب..." onkeyup="filterAdminTable()">
-        <button onclick="exportToExcel()" style="background: var(--secondary); color: white; border: none; padding: 0 20px; border-radius: 12px; cursor: pointer;">Excel</button>
+        <div class="search-container">
+            <input type="text" id="adminSearch" placeholder="اكتب جزءاً من اسم الطالب للبحث..." onkeyup="showSuggestions(this.value)" autocomplete="off">
+            <div id="suggestions" class="suggestions-list"></div>
+        </div>
+        <button onclick="exportToExcel()" style="background: var(--secondary); color: white; border: none; padding: 0 15px; border-radius: 12px; cursor: pointer;">Excel</button>
     </div>
+
     <div style="overflow-x: auto;">
-        <table>
+        <table id="adminTable">
             <thead>
                 <tr><th>التاريخ</th><th>الصف</th><th>الطالب</th><th>الهاتف</th><th>الصلة</th></tr>
             </thead>
@@ -148,12 +176,13 @@
 <div id="successModal">
     <div class="modal-content">
         <div style="font-size: 60px; color: var(--secondary);">✔</div>
-        <h2 style="color: var(--primary);">تم الاستلام بنجاح</h2>
-        <button onclick="location.reload()" class="btn-submit">عودة للرئيسية</button>
+        <h2 style="color: var(--primary);">تم الحفظ بنجاح</h2>
+        <button onclick="location.reload()" class="btn-submit">حسناً</button>
     </div>
 </div>
 
 <script>
+    // --- الربط وتهيئة البيانات ---
     const firebaseConfig = {
         apiKey: "AIzaSyBQsjvkdmYaR6OOGAbG-WdqIJCiHbw_Avo",
         authDomain: "madrassa-yazeed.firebaseapp.com",
@@ -178,13 +207,14 @@
         "5_3": ["إلياس بن ابراهيم بن حمد مسعود العامري", "تيمور بن أحمد بن مبروك أحمد مسن", "خالد أحمد حسن التابعي", "خالد بن عمرو بن غفيل سالم خوار", "سامي بن عماد الميساوي", "شهاب بن حمد بن محمد حمد الهنائي", "عبدالله بن محمد بن عيظه سعيد جداد الكثيري", "فهد بن محمد بن سالم مسلم المسهلي", "فيصل بن حمد بن محمد حمد الهنائي", "مازن مصطفى محمد أحمد على", "محمد بن حسين بن سالم مبخوت خوار", "محمد بن سعيد بن سالم خويتم مسن", "مروان سلامه حسين علي شليل", "مسلم بن سعيد بن سعد سعيد جداد", "مسلم بن محمد بن مسلم أحمد جداد", "هيثم بن فواز بن سليمان عبدالله الهاشمي"],
         "6_1": ["الخطاب محمد حمد النيل أحمد", "الخليل بن غسان بن طالب بدر الصمصامي", "الهجرس بن سليمان بن مبارك سليمان الحبسي", "أنس محمود محمد أحمد", "أواب عبدالعظيم حسين الطاهر", "حسين محمد يوسف خضر", "سالم بن ثاني بن محمد بخيت خوار", "سالم بن حمود بن سالم سعيد الوائلي", "سالم بن محمد بن سالم عبدالله الراشدي", "سعود بن عبدالعزيز بن بخيت حم مسن", "سعيد بن حاتم بن سعيد محمد بيت مسن", "سعيد بن مسلم بن سعيد سهيل مسن", "سهيل بن سليم بن سهيل سليم قمصيت", "سهيل محسن سهيل ال خوار", "سيف بن خميس بن سالم محمد الجنيبي", "سيف بن نائف بن عبدالله مبارك جداد", "عبد الرحمن بن محمد بن سعيد سالم مسن", "عبدالله بن غانم بن سالم عبدالله الراشدي", "عبدالله بن محمد بن أحمد رويكان خوار", "عبدالله عواض عبدالله عبداللطيف", "علي بن حامد بن مسلم محمد مسن الكثيري", "علي بن سعيد بن محمد سالم خوار", "مبروك بن محمد بن سالم ظويهر جداد", "متعب بن سعيد بن عبدالله محمد جداد", "محمد بن جميل بن عبدي بخيت خوار", "مسلم بن بدر بن مسلم سعيد مسن", "مسلم بن محمد بن مسلم سعيد جداد"],
         "6_2": ["الليث بن إبراهيم بن ناصر علي الحوسني", "المغيره بشرى محجوب أحمد", "بخيت بن سعيد بن مبارك بخيت جداد", "سالم بن أحمد بن سهيل سالم خوار", "سالم بن حاتم بن سالم سعد خوار", "سالم بن سلطان بن سليّم غانم الراشدي", "سالم بن سهيل بن سالم المحناء جداد", "سعد بن كرامه بن سالم علي خوار", "سعيد بن عادل بن سالم خويتم مسن بيت كثير", "سلطان بن مسلم بن سلطان أسد الراشدي", "عامر بن خالد بن سالم مسن", "عبدالله بن حسين بن علي محمد ال عبدالسلام", "عبدالله بن عبدي بن بخيت زولة خوار", "عبدالله سعيدان سيعد الراشدي", "غازي بن محمد بن صالح أحمد جداد", "غيث بن أحمد بن بخيت معيوف المسهلي", "مازن تامر محمد محمد علوش", "مازن عبدالسميع سليمان خميس", "ماهر بن محمد بن مستهيل محمد صفرار", "محمد بن عبدالله بن محمد عبدالله خوار", "محمد حافظ سعيد رعفيت", "محمد محسن سهيل ال خوال", "مدرك بن خالد بن سعيد بخيت الشعشعي", "مسلم بن سالم بن عبدالله سعيد الراشدي", "مسلم بن محمد بن سعيد مسلم جداد", "يوسف بن محمد بن بخيت سالم خوار", "يوسف عماد الميساوي"],
-        "7_1": ["أحمد أمجد أحمد أحمد نجاد", "أحمد بن سعيد بن صالح أحمد جداد", "العبد بن محمد بن العبد زائد مسن", "النابي بن محمد بن سالم سهيل مسن", "بخيت بن أحمد بن بخيت فريح مسن الكثيري", "تميم بن محمد بن سهيل جديد جداد الكثيري", "تميم بن محمد بن مبروك عبدالله المسهلي", "حمد بن محمد بن أحمد الهزار الكثيري", "حمد بن محمد بن سعيد مسن", "راشد بن محمد بن أحمد محمد مسن الكثيري", "سالم بن سعد بن صلاح رعفيت", "سعيد بن شهاب بن أحمد محمد مسن", "سعيد بن محمد بن صالح جداد", "سعيد بن محمد بن مبارك بخيت جداد", "سلطان بن حمزة بن مسلم نفل ربعات الكثيري", "عامر بن محمد بن مسلم بخيت المسهلي", "عبدالله بن سالم بن سهيل سليم قمصيت", "عمر أحمد محمد أحمد", "عمر عبدالقوى ابراهيم ابراهيم", "فريح بن عبدالله بن فريح أحمد مسن", "مجتبى عيسى محمد", "مسلم بن محمد بن عوض خادم الوهيبي", "نصر بن سالم بن ظويهر سالم جداد", "ياسر بن عادل بن سالم مسن بيت كثير", "يوسف عمر أحمد عبد الرحمن حاكم"],
+        "7_1": ["أحمد أمجد أحمد أحمد نجاد", "أحمد بن سعيد بن صالح أحمد جداد", "العبد بن محمد بن العبد زائد مسن", "النابي بن محمد بن سالم سهيل مسن", "بخيت بن أحمد بن بخيت fريح مسن الكثيري", "تميم بن محمد بن سهيل جديد جداد الكثيري", "تميم بن محمد بن مبروك عبدالله المسهلي", "حمد بن محمد بن أحمد الهزار الكثيري", "حمد بن محمد بن سعيد مسن", "راشد بن محمد بن أحمد محمد مسن الكثيري", "سالم بن سعد بن صلاح رعفيت", "سعيد بن شهاب بن أحمد محمد مسن", "سعيد بن محمد بن صالح جداد", "سعيد بن محمد بن مبارك بخيت جداد", "سلطان بن حمزة بن مسلم نفل ربعات الكثيري", "عامر بن محمد بن مسلم بخيت المسهلي", "عبدالله بن سالم بن سهيل سليم قمصيت", "عمر أحمد محمد أحمد", "عمر عبدالقوى ابراهيم ابراهيم", "فريح بن عبدالله بن فريح أحمد مسن", "مجتبى عيسى محمد", "مسلم بن محمد بن عوض خادم الوهيبي", "نصر بن سالم بن ظويهر سالم جداد", "ياسر بن عادل بن سالم مسن بيت كثير", "يوسف عمر أحمد عبد الرحمن حاكم"],
         "7_2": ["ابراهيم محمد سالم السطري", "العباس بن مبخوت بن سالم مسن بيت كثير", "المنذر بن فواز بن سليمان عبدالله الهاشمي", "امير بن ناصر بن عبدالرحمن عبدالله البلوشي", "حسين سلامه حسين علي شليل", "خالد بن سالم بن علي عبدالله العلوي", "خالد بن محمد بن سهيل مطر جداد", "خالد بن مسلم بن أحمد جداد", "رويزم بن مسلم بن بخيت رويزم صندل المحرمي", "سالم بن مبارك بن سهيل محمد الراشدي", "سعد بن محمد بن سعد حفيظ خوار", "سعود بن عبدالله بن بخيت زايد مسن", "سعيد بن عبدالله بن سالم أحمد جداد", "سعيد بن مسلم بن عبدالله سعيد جداد", "سلطان بن مسلم بن سالم صالح جداد", "عبدالله بن عارف بن سالم جداد", "علي بن سعيد بن علي خوار", "عمر فؤاد فهمي محمد فؤاد", "فهد بن غانم بن سالم جداد", "محسن معتصم محمد الامام", "محمد بن سالم بن مبخوت محمد الراشدي", "مسلم بن سالم بن سهيل الراشدي", "مصطفى محمود كريم ابراهيم أحمد", "معاذ أحمد سميح علي سيد", "منيف بن سعيد بن محمد سالم جداد", "هادف بن سعيد بن هادف حسن شحري خوار", "وائل بن حمود بن سالم سعيد الوائلي"],
         "7_3": ["أحمد بن نائف بن عبدالله محمد جداد", "الطلح بن سالم بن حسن علي خوار", "بخيت بن مسلم سالم مبخوت الراشدي", "بدر بن عامر بن مسلم الرحابه جداد", "حثيث بن سلطان بن محمد سهيل مسن", "حمد بن محمد بن عبدالله محمد جداد الكثيري", "سالم بن أحمد بن سالم جداد", "سعيد بن مبروك بن سالم عامر المسهلي", "سهيل بن عبدالله بن سهيل حافظ خوار", "عبد الله أمير عبدالله نصر", "عبدالله بن محمد بن علي مهوي العامري", "علي بن ثاني بن علي سالم جداد بيت كثير", "فارس زياد محمد أبو رواع", "مبارك بن سعيد بن سالم خويتم مسن", "محسن بن عقيل بن سالم سعد خوار", "محمد بن بخيت بن فرج السنح شهوان المهري", "محمد بن علي بن بخيت محمد الراشدي", "محمد بن غانم بن الرضه سلاوم جداد", "محمد بن مسلم بن محمد مسلم جداد", "محمد بن ناصر بن عبدالله جداد", "محمد بن هيثم بن سالم فائل جداد الكثيري", "مسلم بن حسن بن هادف حسن شحري خوار", "معاذ فؤاد الحنيش الأحمد", "ناصر بن علي بن ناصر سهيل جداد", "نور الدين محسن العلي", "هيثم بن محمد بن سالم فائل جداد"],
         "8_1": ["أحمد بن سعيد بن بخيت صندل المحرمي", "أحمد بن عامر بن محمد سالم خوار", "أحمد بن محمد بن سالم مبارك المسهلي", "المر بن غانم بن محمد سهيل المسهلي الكثيري", "إياد أحمد توفيق عباس مصطفى", "بخيت بن خالد بن بخيت زايد مسن", "بخيت بن سعيدان بن بخيت رويزم صندل المحرمي", "حاكم بن فهد بن سالم خويتم مسن", "حريز بن محسن بن صالح حريز خوار", "حمد بن محمد بن العبد سهيل جداد", "حمد بن محمد بن سعد سعيد جداد", "حمدان بن محمد بن عبدالله محمد جداد", "زايد بن محمد بن مسلم سعيد جداد", "سعود بن أحمد بن محمد الطوف الهزار الكثيري", "سعود بن حاتم بن سعيد محمد بيت مسن", "سعود بن محمد بن صالح أحمد جداد", "سعيد بن عبدالله بن مبخوت حماده جداد", "سهيل بن صالح بن بخيت صالح منيف خوار", "سهيل بن محسن بن سليم محفوظ خوار", "سهيل بن محمد بن سالم علي الحمر", "سيف بن عبدالله بن مسلم محمد مسن الكثيري", "فائل بن محمد بن فائل مطر جداد", "محمد اسماعيل آدم علي", "محمد بن سالم بن سعيد المحناء جداد", "محمد بن سعد بن مسلم سعيد الراشدي", "محمد بن مسلم بن سعيد بخيت مسن", "محمد بن مسلم بن سهيل مطر جداد", "محمد مصطفى عبدالنبي عبده", "مسلم بن حمد بن سلوم مسلم الجنيبي", "مطر بن علي بن سالم عامر المسهلي", "ناصر بن سالم بن محمد الطوف الكثيري", "صالح جعفر صالح عبد الله"],
         "8_2": ["الجلندى بن يقظان بن سليمان سالم الناصري", "الخطاب محمد صلاح محمود", "تميم بن هيثم بن أحمد سعيد مسن الكثيري", "خالد بن محمد بن سالم أحمد جداد", "خالد بن نايف بن سالم عيضه جداد", "ركاض بن بخيت بن فرج شهوان عزاب", "سالم بن حامد بن مسلم محمد مسن الكثيري", "سالم بن عامر بن سالم ظويهر جداد", "سالم سهيل سالم فرج الخوار", "سعد بن حاكم بن أحمد خوار", "سعود بن سالم بن سعيد سهيل مسن", "سعود بن نائف بن عبدالله محمد جداد", "سعيد بن راكان بن مسلم محمد مسن الكثيري", "صالح بن علي بن صالح علي المسهلي", "طارق أحمد ضاحي عبدالغني حسين", "طلال بن مسلم بن سعيد سهيل مسن", "عامر بن أحمد بن مبخوت مسلم منيف خوار", "عبدالعزيز بن فيصل بن سعيد محمد المسهلي", "عبدالله بن سالم بن أحمد صالح مسن", "علي جمعان سالم سعيد موسى", "عمر بن محمد بن سليمان محمد الفهدي", "غفيل بن عمرو بن غفيل سالم خوار", "مالك وليد محمد فؤاد", "محمد بن سعيد بن صالح أحمد جداد", "محمد بن مسلم بن سهيل محمد الراشدي", "مسلم بن أحمد بن مسلم الرحابه جداد", "ناصر بن مرشد بن بخيت عبدالله مسن", "يام بن محمد بن سالم بخيت الكثيري", "يوسف بن سالم بن عامر سلاوم جداد", "محمد حسين العلي"]
     };
 
+    // --- توليد واجهة المستخدم ---
     const picker = document.getElementById('classPicker');
     for(let key in classes) {
         let div = document.createElement('div');
@@ -200,7 +230,7 @@
         document.getElementById('classInput').value = code;
         document.getElementById('classNameInput').value = name;
         const sel = document.getElementById('studentSelect');
-        sel.innerHTML = '<option value="" disabled selected>-- اختر الطالب من القائمة --</option>';
+        sel.innerHTML = '<option value="" disabled selected>-- اختر اسم الطالب --</option>';
         studentsData[code].forEach(s => {
             let o = document.createElement('option'); o.value = s; o.innerText = s; sel.appendChild(o);
         });
@@ -210,7 +240,6 @@
     document.getElementById('updateForm').onsubmit = async (e) => {
         e.preventDefault();
         const phone = document.getElementById('newPhone').value;
-        if(!/^[79][0-9]{7}$/.test(phone)) return alert("رقم الهاتف غير صحيح");
         const btn = document.getElementById('submitBtn');
         btn.disabled = true; btn.innerText = "جاري الحفظ...";
         try {
@@ -223,9 +252,10 @@
                 timestamp: new Date().toLocaleString('ar-OM')
             });
             document.getElementById('successModal').style.display = 'flex';
-        } catch(e) { alert("فشل الاتصال"); btn.disabled = false; }
+        } catch(e) { alert("خطأ في الاتصال"); btn.disabled = false; }
     };
 
+    // --- النقر الثلاثي والمدير ---
     let clickCount = 0;
     function handleSecretClick() {
         clickCount++;
@@ -240,15 +270,15 @@
         setTimeout(() => clickCount = 0, 1000);
     }
 
-    let allData = [];
+    let allUpdates = [];
     function loadAdminDashboard() {
         db.collection("updates").orderBy("timestamp", "desc").onSnapshot(snap => {
             const body = document.getElementById('adminTableBody');
             const statsArea = document.getElementById('statsArea');
             const counts = {};
-            body.innerHTML = ""; allData = [];
+            body.innerHTML = ""; allUpdates = [];
             snap.forEach(doc => {
-                const d = doc.data(); allData.push(d);
+                const d = doc.data(); allUpdates.push(d);
                 counts[d.classCode] = (counts[d.classCode] || 0) + 1;
                 body.innerHTML += `<tr><td>${d.timestamp}</td><td>${d.className}</td><td>${d.studentName}</td><td>${d.phoneNumber}</td><td>${d.relation}</td></tr>`;
             });
@@ -256,22 +286,59 @@
             for(let key in classes) {
                 let done = counts[key] || 0;
                 let pc = Math.round((done/classes[key].total)*100);
-                statsArea.innerHTML += `<div class="stat-card"><div style="font-size:12px; font-weight:bold;">${classes[key].name}</div><div style="font-size:11px;">${done} / ${classes[key].total}</div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%"></div></div></div>`;
+                statsArea.innerHTML += `<div class="stat-card">
+                    <div style="font-size:11px; font-weight:bold;">${classes[key].name}</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:${pc}%"></div></div>
+                </div>`;
             }
         });
     }
 
-    function filterAdminTable() {
-        let q = document.getElementById('adminSearch').value.toLowerCase();
-        let rows = document.getElementById('adminTableBody').rows;
-        for(let r of rows) r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
+    // --- نظام البحث الذكي الجديد ---
+    function showSuggestions(val) {
+        const div = document.getElementById('suggestions');
+        div.innerHTML = "";
+        if(val.length < 2) { div.style.display = "none"; return; }
+        
+        // البحث في البيانات المحدثة فقط لإظهار الأرقام
+        const matches = allUpdates.filter(u => u.studentName.includes(val));
+        
+        if(matches.length > 0) {
+            div.style.display = "block";
+            matches.forEach(m => {
+                let item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.innerText = m.studentName;
+                item.onclick = () => selectResult(m);
+                div.appendChild(item);
+            });
+        } else {
+            div.style.display = "none";
+        }
+    }
+
+    function selectResult(studentObj) {
+        document.getElementById('suggestions').style.display = "none";
+        document.getElementById('adminSearch').value = studentObj.studentName;
+        
+        const card = document.getElementById('resultCard');
+        document.getElementById('resName').innerText = studentObj.studentName;
+        document.getElementById('resClass').innerText = studentObj.className;
+        document.getElementById('resPhone').innerText = studentObj.phoneNumber;
+        document.getElementById('resRelation').innerText = studentObj.relation;
+        document.getElementById('resDate').innerText = studentObj.timestamp;
+        card.style.display = "block";
+
+        // فلترة الجدول تلقائياً
+        const rows = document.getElementById('adminTableBody').rows;
+        for(let r of rows) r.style.display = r.innerText.includes(studentObj.studentName) ? "" : "none";
     }
 
     function exportToExcel() {
-        const ws = XLSX.utils.json_to_sheet(allData);
+        const ws = XLSX.utils.json_to_sheet(allUpdates);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Updates");
-        XLSX.writeFile(wb, "Yazeed_School_Data.xlsx");
+        XLSX.writeFile(wb, "بيانات_يزيد_بن_الحارث.xlsx");
     }
 </script>
 </body>
