@@ -3,42 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام مدرسة يزيد بن الحارث - تحديث البيانات</title>
+    <title>نظام مدرسة يزيد بن الحارث | الرسمي</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
 
     <style>
-        :root { --primary: #004a99; --secondary: #28a745; --bg: #f4f7f9; --accent: #ffc107; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); margin: 0; padding: 10px; text-align: right; }
-        .container { max-width: 900px; margin: 10px auto; background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); border-top: 8px solid var(--primary); position: relative; }
-        .header-logos { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .logo { width: 80px; height: auto; }
-        .header-text { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
-        
-        .class-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 25px; }
-        .class-card { background: #fdfdfd; border: 2px solid #eee; padding: 18px 10px; border-radius: 15px; text-align: center; cursor: pointer; transition: all 0.3s ease; font-weight: bold; color: #444; font-size: 15px; }
-        .class-card:hover { border-color: var(--primary); background: #f0f7ff; transform: translateY(-2px); }
-        .class-card.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 5px 15px rgba(0,74,153,0.3); }
-        
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 10px; font-weight: bold; color: var(--primary); }
-        select, input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; font-family: inherit; }
-        .hidden { display: none; }
-        .btn-submit { width: 100%; padding: 16px; background: var(--secondary); color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        
-        .school-footer { text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
-        .manager-title { color: #666; font-size: 14px; margin: 0; }
-        .manager-name { color: var(--primary); font-size: 19px; font-weight: bold; margin: 5px 0; }
+        :root { 
+            --primary: #004a99; 
+            --secondary: #28a745; 
+            --bg: #f0f4f8; 
+            --error: #dc3545;
+        }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 25px; }
-        .stat-card { background: #fff; border-radius: 12px; padding: 12px; border: 1px solid #eee; text-align: center; }
-        .progress-bar { width: 100%; background: #eee; height: 8px; border-radius: 4px; margin-top: 8px; }
-        .progress-fill { background: var(--secondary); height: 100%; border-radius: 4px; transition: width 0.6s; }
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background-color: var(--bg); 
+            margin: 0; padding: 10px; 
+            text-align: right; 
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* إضافة العلامة المائية في خلفية الصفحة */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px; /* حجم العلامة المائية */
+            height: 400px;
+            background-image: url('logo.png'); /* تأكد من وجود ملف الشعار بنفس الاسم */
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            opacity: 0.05; /* درجة الشفافية: خفيفة جداً لضمان وضوح النص */
+            z-index: -1; /* خلف كل المحتويات */
+            pointer-events: none;
+        }
+
+        .container { 
+            max-width: 850px; 
+            margin: 20px auto; 
+            background: rgba(255, 255, 255, 0.95); /* شفافية بسيطة للمحتوى */
+            padding: 30px; 
+            border-radius: 25px; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.1); 
+            border-top: 10px solid var(--primary);
+            backdrop-filter: blur(5px);
+        }
+
+        .header-logos { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .logo { width: 85px; height: auto; z-index: 2; }
+
+        /* تنسيق بطاقات الصفوف */
+        .class-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
+            gap: 12px; 
+            margin: 20px 0; 
+        }
+
+        .class-card { 
+            background: #fff; 
+            border: 2px solid #edf2f7; 
+            padding: 18px 10px; 
+            border-radius: 15px; 
+            text-align: center; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            font-weight: 700;
+            color: #4a5568;
+        }
+
+        .class-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+        .class-card.active { 
+            background: var(--primary); 
+            color: white; 
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(0,74,153,0.2);
+        }
+
+        .form-group { margin-bottom: 25px; }
+        label { display: block; margin-bottom: 10px; font-weight: 700; color: var(--primary); }
         
-        .admin-login-wrapper { text-align: center; margin-top: 20px; }
-        .admin-login-btn { background: none; border: none; color: #bbb; font-size: 11px; cursor: pointer; text-decoration: underline; }
+        select, input { 
+            width: 100%; padding: 15px; 
+            border: 2px solid #edf2f7; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            font-family: 'Cairo';
+            box-sizing: border-box;
+        }
+
+        .invalid-feedback { color: var(--error); font-size: 13px; margin-top: 5px; display: none; }
+
+        .btn-submit { 
+            width: 100%; padding: 18px; 
+            background: linear-gradient(135deg, var(--secondary) 0%, #218838 100%); 
+            color: white; border: none; 
+            border-radius: 15px; font-size: 1.1em; font-weight: 700; 
+            cursor: pointer; box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .school-footer { 
+            text-align: center; 
+            margin-top: 40px; 
+            padding-top: 20px; 
+            border-top: 1px solid #eee; 
+        }
+        .manager-name { color: var(--primary); font-size: 20px; font-weight: 700; }
+
+        #successModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: none;
+            justify-content: center; align-items: center; z-index: 9999;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 20px; text-align: center;
+            max-width: 90%; width: 400px;
+        }
+
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -48,14 +138,15 @@
         <img src="وزارة التعليم.png" alt="وزارة التعليم" class="logo">
         <img src="logo.png" alt="شعار المدرسة" class="logo">
     </div>
-    <div class="header-text">
-        <h2 style="color: var(--primary); margin:0;">مدرسة يزيد بن الحارث للتعليم الأساسي</h2>
-        <p style="color: #666;">تحديث بيانات أرقام هواتف أولياء الأمور</p>
+
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h2 style="color: var(--primary); margin: 0;">مدرسة يزيد بن الحارث (5-8)</h2>
+        <p style="color: #666; font-size: 14px;">استمارة تحديث أرقام هواتف أولياء الأمور</p>
     </div>
 
     <form id="updateForm">
         <label>1. اختر الصف الدراسي:</label>
-        <div class="class-grid" id="classPicker">
+        <div class="class-grid">
             <div class="class-card" onclick="selectClass(this, '5_1', 'الخامس أول')">الخامس أول</div>
             <div class="class-card" onclick="selectClass(this, '5_2', 'الخامس ثاني')">الخامس ثاني</div>
             <div class="class-card" onclick="selectClass(this, '5_3', 'الخامس ثالث')">الخامس ثالث</div>
@@ -71,12 +162,12 @@
         <input type="hidden" id="classInput" required>
         <input type="hidden" id="classNameInput">
 
-        <div class="form-group hidden" id="studentGroup">
-            <label>2. اسم الطالب:</label>
-            <select id="studentSelect" required></select>
-        </div>
+        <div id="nextSteps" class="hidden">
+            <div class="form-group">
+                <label>2. اسم الطالب الثلاثي والقبيلة:</label>
+                <select id="studentSelect" required></select>
+            </div>
 
-        <div id="dataFields" class="hidden">
             <div class="form-group">
                 <label>3. صلة القرابة:</label>
                 <select id="relation">
@@ -85,59 +176,37 @@
                     <option>ولي الأمر</option>
                 </select>
             </div>
+
             <div class="form-group">
-                <label>4. رقم الهاتف المحدث:</label>
-                <input type="tel" id="newPhone" placeholder="أدخل رقم الهاتف" maxlength="8" required pattern="[97][0-9]{7}">
+                <label>4. رقم الهاتف (8 أرقام):</label>
+                <input type="tel" id="newPhone" placeholder="9xxxxxxx" maxlength="8" required>
+                <div id="phoneError" class="invalid-feedback">يرجى إدخال رقم صحيح يبدأ بـ 9 أو 7</div>
             </div>
-            <button type="submit" class="btn-submit" id="submitBtn">إرسال التحديث</button>
+
+            <button type="submit" class="btn-submit" id="submitBtn">إرسال التحديث الآن</button>
         </div>
     </form>
 
     <div class="school-footer">
-        <p class="manager-title">مدير المدرسة الأستاذ</p>
-        <p class="manager-name">هشام الكحالي</p>
-    </div>
-
-    <div class="admin-login-wrapper">
-        <button class="admin-login-btn" onclick="openAdmin()">لوحة دخول الإدارة</button>
+        <div style="color: #888; font-size: 13px;">تحت إشراف مدير المدرسة</div>
+        <div class="manager-name">الأستاذ هشام الكحالي</div>
     </div>
 </div>
 
-<div class="container hidden" id="adminView" style="max-width: 1100px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-        <h3 style="margin:0;">إدارة تحديثات مدرسة يزيد</h3>
-        <button onclick="location.reload()" style="background:white; color:red; border:none; padding:8px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">خروج</button>
-    </div>
-
-    <div class="stats-grid" id="statsContainer"></div>
-
-    <div style="display:flex; gap:10px; margin-bottom:20px;">
-        <input type="text" id="adminSearch" class="search-box" placeholder="🔍 ابحث عن طالب..." onkeyup="searchTable()" style="flex-grow:1; padding:12px; border:2px solid var(--primary); border-radius:8px;">
-        <button onclick="exportToExcel()" style="background:var(--secondary); color:white; border:none; padding:10px 25px; border-radius:8px; cursor:pointer; font-weight:bold;">تصدير البيانات (Excel)</button>
-    </div>
-
-    <div style="overflow-x:auto;">
-        <table id="dataTable" style="width:100%; border-collapse: collapse;">
-            <thead>
-                <tr style="background:#f8f9fa; color:var(--primary);">
-                    <th>التاريخ</th><th>الصف</th><th>اسم الطالب</th><th>الهاتف</th><th>الصلة</th>
-                </tr>
-            </thead>
-            <tbody id="adminTableBody"></tbody>
-        </table>
-    </div>
-
-    <div class="school-footer">
-        <p class="manager-title">مدير المدرسة الأستاذ</p>
-        <p class="manager-name">هشام الكحالي</p>
+<div id="successModal">
+    <div class="modal-content">
+        <div style="font-size: 60px; color: var(--secondary);">✔</div>
+        <h2 style="color: var(--primary);">تم الاستلام بنجاح</h2>
+        <p>شكرًا لتعاونكم معنا في تحديث بيانات التواصل الخاصة بالطالب.</p>
+        <button onclick="location.reload()" class="btn-submit">عودة للرئيسية</button>
     </div>
 </div>
 
 <script>
+    // --- الربط التقني بـ Firebase ---
     const firebaseConfig = {
         apiKey: "AIzaSyBQsjvkdmYaR6OOGAbG-WdqIJCiHbw_Avo",
         authDomain: "madrassa-yazeed.firebaseapp.com",
-        databaseURL: "https://madrassa-yazeed-default-rtdb.firebaseio.com",
         projectId: "madrassa-yazeed",
         storageBucket: "madrassa-yazeed.firebasestorage.app",
         messagingSenderId: "1025900552589",
@@ -146,15 +215,6 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-
-    const classMapping = {
-        "5_1": "الخامس أول", "5_2": "الخامس ثاني", "5_3": "الخامس ثالث",
-        "6_1": "السادس أول", "6_2": "السادس ثاني",
-        "7_1": "السابع أول", "7_2": "السابع ثاني", "7_3": "السابع ثالث",
-        "8_1": "الثامن أول", "8_2": "الثامن ثاني"
-    };
-
-    const classTotals = { "5_1": 20, "5_2": 22, "5_3": 16, "6_1": 27, "6_2": 27, "7_1": 25, "7_2": 27, "7_3": 26, "8_1": 32, "8_2": 30 };
 
     const studentsData = {
         "5_1": ["أحمد بن سالم بن سعيد حسن خوار", "الامين محمد احمد الطيب", "تركي بن محمد بن سعيد مسلم مسن", "خالد بن راشد بن سعيد سالم مسن", "سالم بن محمد بن سالم صالح جداد", "سالم بن مسلم بن سهيل محمد الراشدي", "سعود بن سالم بن ظويهر سالم جداد", "سعود بن شهاب بن نافع مسلم المسهلي الكثيري", "سعيد بن عبدالله بن بقال خويدع خوار", "سلطان بن محمد بن علي مهوي العامري", "عامر بن سهيل بن عامر سليّم قمصيت", "عبدالرحمن احمد فوزي عبدالفتاح", "علي بن سعد بن مسلم سعيد الراشدي", "عوض بن محمد بن عوض خادم الوهيبي", "غانم بن محمد بن سليم مسلم الجنيبي", "غانم بن محمد بن مبارك بخيت جداد", "محمد احمد محمود عبدالحميد", "محمد بن مسلم بن محمد بخيت مسن", "نايف بن محمد بن سالم سهيل مسن", "همدان بن احمد بن عبدالله محمد جداد"],
@@ -166,98 +226,64 @@
         "7_2": ["ابراهيم محمد سالم السطري", "العباس بن مبخوت بن سالم مسن بيت كثير", "المنذر بن فواز بن سليمان عبدالله الهاشمي", "امير بن ناصر بن عبدالرحمن عبدالله البلوشي", "حسين سلامه حسين علي شليل", "خالد بن سالم بن علي عبدالله العلوي", "خالد بن محمد بن سهيل مطر جداد", "خالد بن مسلم بن أحمد جداد", "رويزم بن مسلم بن بخيت رويزم صندل المحرمي", "سالم بن مبارك بن سهيل محمد الراشدي", "سعد بن محمد بن سعد حفيظ خوار", "سعود بن عبدالله بن بخيت زايد مسن", "سعيد بن عبدالله بن سالم احمد جداد", "سعيد بن مسلم بن عبدالله سعيد جداد", "سلطان بن مسلم بن سالم صالح جداد", "عبدالله بن عارف بن سالم جداد", "علي بن سعيد بن علي خوار", "عمر فؤاد فهمي محمد فؤاد", "فهد بن غانم بن سالم جداد", "محسن معتصم محمد الامام", "محمد بن سالم بن مبخوت محمد الراشدي", "مسلم بن سالم بن سهيل الراشدي", "مصطفى محمود كريم ابراهيم احمد", "معاذ احمد سميح علي سيد", "منيف بن سعيد بن محمد سالم جداد", "هادف بن سعيد بن هادف حسن شحري خوار", "وائل بن حمود بن سالم سعيد الوائلي"],
         "7_3": ["أحمد بن نائف بن عبدالله محمد جداد", "الطلح بن سالم بن حسن علي خوار", "بخيت بن مسلم سالم مبخوت الراشدي", "بدر بن عامر بن مسلم الرحابه جداد", "حثيث بن سلطان بن محمد سهيل مسن", "حمد بن محمد بن عبدالله محمد جداد الكثيري", "سالم بن احمد بن سالم جداد", "سعيد بن مبروك بن سالم عامر المسهلي", "سهيل بن عبدالله بن سهيل حافظ خوار", "عبد الله أمير عبدالله نصر", "عبدالله بن محمد بن علي مهوي العامري", "علي بن ثاني بن علي سالم جداد بيت كثير", "فارس زياد محمد ابو رواع", "مبارك بن سعيد بن سالم خويتم مسن", "محسن بن عقيل بن سالم سعد خوار", "محمد بن بخيت بن فرج السنح شهوان المهري", "محمد بن علي بن بخيت محمد الراشدي", "محمد بن غانم بن الرضه سلاوم جداد", "محمد بن مسلم بن محمد مسلم جداد", "محمد بن ناصر بن عبدالله جداد", "محمد بن هيثم بن سالم فائل جداد الكثيري", "مسلم بن حسن بن هادف حسن شحري خوار", "معاذ فؤاد الحنيش الاحمد", "ناصر بن علي بن ناصر سهيل جداد", "نور الدين محسن العلي", "هيثم بن محمد بن سالم فائل جداد"],
         "8_1": ["أحمد بن سعيد بن بخيت صندل المحرمي", "أحمد بن عامر بن محمد سالم خوار", "أحمد بن محمد بن سالم مبارك المسهلي", "المر بن غانم بن محمد سهيل المسهلي الكثيري", "اياد احمد توفيق عباس مصطفى", "بخيت بن خالد بن بخيت زايد مسن", "بخيت بن سعيدان بن بخيت رويزم صندل المحرمي", "حاكم بن فهد بن سالم خويتم مسن", "حريز بن محسن بن صالح حريز خوار", "حمد بن محمد بن العبد سهيل جداد", "حمد بن محمد بن سعد سعيد جداد", "حمدان بن محمد بن عبدالله محمد جداد", "زايد بن محمد بن مسلم سعيد جداد", "سعود بن أحمد بن محمد الطوف الهزار الكثيري", "سعود بن حاتم بن سعيد محمد بيت مسن", "سعود بن محمد بن صالح احمد جداد", "سعيد بن عبدالله بن مبخوت حماده جداد", "سهيل بن صالح بن بخيت صالح منيف خوار", "سهيل بن محسن بن سليم محفوظ خوار", "سهيل بن محمد بن سالم علي الحمر", "سيف بن عبدالله بن مسلم محمد مسن الكثيري", "فائل بن محمد بن فائل مطر جداد", "محمد اسماعيل ادم على", "محمد بن سالم بن سعيد المحناء جداد", "محمد بن سعد بن مسلم سعيد الراشدي", "محمد بن مسلم بن سعيد بخيت مسن", "محمد بن مسلم بن سهيل مطر جداد", "محمد مصطفى عبدالنبي عبده", "مسلم بن حمد بن سلوم مسلم الجنيبي", "مطر بن علي بن سالم عامر المسهلي", "ناصر بن سالم بن محمد الطوف الكثيري", "صالح جعفر صالح عبد الله"],
-        "8_2": ["الجلندى بن يقظان بن سليمان سالم الناصري", "الخطاب محمد صلاح محمود", "تميم بن هيثم بن احمد سعيد مسن الكثيري", "خالد بن محمد بن سالم احمد جداد", "خالد بن نايف بن سالم عيضه جداد", "ركاض بن بخيت بن فرج شهوان عزاب", "سالم بن حامد بن مسلم محمد مسن الكثيري", "سالم بن عامر بن سالم ظويهر جداد", "سالم سهيل سالم فرج الخوار", "سعد بن حاكم بن أحمد خوار", "سعود بن سالم بن سعيد سهيل مسن", "سعود بن نائف بن عبدالله محمد جداد", "سعيد بن راكان بن مسلم محمد مسن الكثيري", "صالح بن علي بن صالح علي المسهلي", "طارق احمد ضاحي عبدالغني حسين", "طلال بن مسلم بن سعيد سهيل مسن", "عامر بن احمد بن مبخوت مسلم منيف خوار", "عبدالعزيز بن فيصل بن سعيد محمد المسهلي", "عبدالله بن سالم بن أحمد صالح مسن", "علي جمعان سالم سعيد موسى", "عمر بن محمد بن سليمان محمد الفهدي", "غفيل بن عمرو بن غفيل سالم خوار", "مالك وليد محمد فواد", "محمد بن سعيد بن صالح أحمد جداد", "محمد بن مسلم بن سهيل محمد الراشدي", "مسلم بن احمد بن مسلم الرحابه جداد", "ناصر بن مرشد بن بخيت عبدالله مسن", "يام بن محمد بن سالم بخيت الكثيري", "يوسف بن سالم بن عامر سلاوم جداد", "محمد حسين العلي"]
+        "8_2": ["الجلندى بن يقظان بن سليمان سالم الناصري", "الخطاب محمد صلاح محمود", "تميم بن هيثم بن احمد سعيد مسن الكثيري", "خالد بن محمد بن سالم احمد جداد", "خالد بن نايف بن سالم عيضه جداد", "ركاض بن بخيت بن فرج شهوان عزاب", "سالم بن حامد بن مسلم محمد مسن الكثيري", "سالم بن عامر بن سالم ظويهر جداد", "سالم سهيل سالم فرج الخوار", "سعد بن حاكم بن أحمد خوار", "سعود بن سالم بن سعيد سهيل مسن", "سعود بن نائف بن عبدالله محمد جداد", "سعيد بن راكان بن مسلم محمد مسن الكثيري", "صالح بن علي بن صالح علي المسهلي", "طارق احمد ضاحي عبدالغني حسين", "طلال بن مسلم بن سعيد سهيل مسن", "عامر بن احمد بن مبخوت مسلم منيف خوار", "عبدالعزيز بن فيصل بن سعيد محمد المسهلي", "عبدالله بن سالم بن أحمد صالح مسن", "علي جمعان سالم سعيد موسى", "عمر بن محمد بن سليمان محمد الفهدي", "غفيل بن عمرو بن غفيل سالم خوار", "مالك وليد محمد فواد", "محمد بن سعيد بن صالح أحمد جداد", "محمد بن مسلم بن سهيل محمد الراشدي", "مسلم بن احمد بن muslim الرحابه جداد", "ناصر بن مرشد بن بخيت عبدالله مسن", "يام بن محمد بن سالم بخيت الكثيري", "يوسف بن سالم بن عامر سلاوم جداد", "محمد حسين العلي"]
     };
 
-    function selectClass(el, clsCode, clsName) {
+    function selectClass(el, code, name) {
         document.querySelectorAll('.class-card').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
-        document.getElementById('classInput').value = clsCode;
-        document.getElementById('classNameInput').value = clsName;
+        document.getElementById('classInput').value = code;
+        document.getElementById('classNameInput').value = name;
         
         const sel = document.getElementById('studentSelect');
-        sel.innerHTML = '<option value="" disabled selected>-- اختر اسم الطالب من القائمة --</option>';
-        studentsData[clsCode].forEach(s => {
+        sel.innerHTML = '<option value="" disabled selected>-- اختر الطالب من هنا --</option>';
+        studentsData[code].forEach(s => {
             let o = document.createElement('option'); o.value = s; o.innerText = s; sel.appendChild(o);
         });
-        document.getElementById('studentGroup').classList.remove('hidden');
-        document.getElementById('dataFields').classList.remove('hidden');
+
+        document.getElementById('nextSteps').classList.remove('hidden');
     }
+
+    // التحقق الفوري من رقم الهاتف
+    document.getElementById('newPhone').addEventListener('input', function(e) {
+        const val = e.target.value;
+        const err = document.getElementById('phoneError');
+        if (val.length > 0 && !/^[79]/.test(val)) {
+            err.style.display = 'block';
+            this.style.borderColor = 'var(--error)';
+        } else {
+            err.style.display = 'none';
+            this.style.borderColor = '#edf2f7';
+        }
+    });
 
     document.getElementById('updateForm').onsubmit = async (e) => {
         e.preventDefault();
+        const phone = document.getElementById('newPhone').value;
+        
+        if (!/^[79][0-9]{7}$/.test(phone)) {
+            alert("عذراً، يجب أن يتكون رقم الهاتف من 8 أرقام ويبدأ بـ 9 أو 7");
+            return;
+        }
+
         const btn = document.getElementById('submitBtn');
-        btn.disabled = true; btn.innerText = "جاري الإرسال...";
+        btn.disabled = true; btn.innerText = "جاري الحفظ الموثوق...";
+
         try {
             await db.collection("updates").add({
-                class: document.getElementById('classInput').value,
+                classCode: document.getElementById('classInput').value,
                 className: document.getElementById('classNameInput').value,
-                student: document.getElementById('studentSelect').value,
-                phone: document.getElementById('newPhone').value,
+                studentName: document.getElementById('studentSelect').value,
+                phoneNumber: phone,
                 relation: document.getElementById('relation').value,
-                at: new Date().toLocaleString('ar-OM')
+                timestamp: new Date().toLocaleString('ar-OM')
             });
-            alert("✅ شكرًا لك، تم استلام بيانات التحديث بنجاح.");
-            location.reload();
-        } catch(e) { alert("❌ حدث خطأ في الاتصال."); btn.disabled = false; }
+            document.getElementById('successModal').style.display = 'flex';
+        } catch(e) { 
+            alert("حدث خطأ في الشبكة، يرجى المحاولة مرة أخرى."); 
+            btn.disabled = false; 
+        }
     };
-
-    function openAdmin() {
-        if(prompt("كلمة مرور الإدارة:") === "Yazeed2026") {
-            document.getElementById('userView').classList.add('hidden');
-            document.getElementById('adminView').classList.remove('hidden');
-            loadAdminData();
-        }
-    }
-
-    function loadAdminData() {
-        db.collection("updates").orderBy("at", "desc").onSnapshot(snap => {
-            const body = document.getElementById('adminTableBody');
-            const stats = {}; body.innerHTML = "";
-            allFetchedData = [];
-            snap.forEach(doc => {
-                const d = doc.data();
-                allFetchedData.push(d);
-                stats[d.class] = (stats[d.class] || 0) + 1;
-                body.innerHTML += `<tr><td style="padding:10px;">${d.at}</td><td style="padding:10px;">${d.className || d.class}</td><td style="padding:10px;">${d.student}</td><td style="padding:10px;">${d.phone}</td><td style="padding:10px;">${d.relation}</td></tr>`;
-            });
-            renderStats(stats);
-        });
-    }
-
-    function renderStats(counts) {
-        const container = document.getElementById('statsContainer');
-        container.innerHTML = "";
-        for (let cls in classTotals) {
-            let done = counts[cls] || 0;
-            let total = classTotals[cls];
-            let pc = Math.round((done/total)*100);
-            container.innerHTML += `<div class="stat-card">
-                <div style="font-weight:bold; color:var(--primary); font-size:13px;">${classMapping[cls]}</div>
-                <div style="font-size:11px; margin:5px 0;">${done} من ${total} طالب</div>
-                <div class="progress-bar"><div class="progress-fill" style="width:${pc}%"></div></div>
-            </div>`;
-        }
-    }
-
-    function searchTable() {
-        let q = document.getElementById('adminSearch').value.toLowerCase();
-        let rows = document.getElementById('adminTableBody').rows;
-        for(let r of rows) { r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none"; }
-    }
-
-    function exportToExcel() {
-        const wb = XLSX.utils.book_new();
-        Object.keys(classTotals).sort().forEach(cls => {
-            const filtered = allFetchedData.filter(d => d.class === cls);
-            if (filtered.length > 0) {
-                const wsData = filtered.map(d => ({ "التاريخ": d.at, "اسم الطالب": d.student, "رقم الهاتف": d.phone, "الصلة": d.relation }));
-                const ws = XLSX.utils.json_to_sheet(wsData);
-                XLSX.utils.book_append_sheet(wb, ws, classMapping[cls]);
-            }
-        });
-        XLSX.writeFile(wb, "تقرير_مدرسة_يزيد.xlsx");
-    }
 </script>
 </body>
 </html>
